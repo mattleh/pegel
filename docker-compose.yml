@@ -1,0 +1,12 @@
+version: '3.4'
+
+services:
+  pegel:
+    image: pegel
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      - MQTT_SERVER=192.168.0.120
+      - MQTT_USER=ha
+      - MQTT_PASSWORD=ha.123.ha
