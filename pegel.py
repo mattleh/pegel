@@ -7,10 +7,16 @@ import json
 import time
 import paho.mqtt.client as MQTT
 import os
+from sys import stdout
 
 logging.basicConfig(level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)
+logFormatter = logging.Formatter\
+("%(name)-12s %(asctime)s %(levelname)-8s %(filename)s:%(funcName)s %(message)s")
+consoleHandler = logging.StreamHandler(stdout) #set streamhandler to stdout
+consoleHandler.setFormatter(logFormatter)
+logger.addHandler(consoleHandler)
 
 mqtt_server = os.environ.get('MQTT_SERVER')
 mqtt_port = int(os.environ.get('MQTT_PORT', 1883))
@@ -81,7 +87,7 @@ while True:
   # connect to MQTT Server and publish all items
   mqtt = MQTT.Client()
   mqtt.enable_logger(logger)
-  
+
   if mqtt_user and mqtt_password:
     mqtt.username_pw_set(mqtt_user, mqtt_password)
   mqtt.connect(mqtt_server, mqtt_port)
