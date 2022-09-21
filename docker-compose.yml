@@ -7,6 +7,6 @@ services:
       context: .
       dockerfile: ./Dockerfile
     environment:
-      - MQTT_SERVER=192.168.0.120
-      - MQTT_USER=ha
-      - MQTT_PASSWORD=ha.123.ha
+      - MQTT_SERVER=Your_mqtt_ip
+      - MQTT_USER=your_mqtt_Username
+      - MQTT_PASSWORD=your_mqtt_Password
