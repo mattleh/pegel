@@ -115,7 +115,7 @@ while True:
                     "model": "PEGEL OOE",
                     "name": "PEGEL OOE",
                 },
-                "unique_id": f"PEGEL_{nr}",
+                "unique_id": f"pegel_{nr}",
             }
         ),
     )
