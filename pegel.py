@@ -110,6 +110,7 @@ while True:
                 "json_attributes_topic": f"homeassistant/sensor/pegel_{nr}/attr",
                 "unit_of_measurement": unit,
                 "value_template": "{{ value_json.level }}",
+                "json_attributes_template": "{{ value_json.timestamp | timestamp_local }}",
                 "device": {
                     "identifiers": ["pegel_bridge"],
                     "manufacturer": "ML/LH",
@@ -130,7 +131,7 @@ while True:
             {
                 "Water": water,
                 "Location": location,
-                "timestamp": "{{ "+str(timest)+" | timestamp_local }}",
+                "timestamp": timest,
             }
         ),
     )
