@@ -58,7 +58,7 @@ while True:
           data[nr]['location'] = element.encode('utf-8')[5:].decode('utf-8')
         # Unit parsen
         if element.startswith('CUNIT'):
-          data[nr]['unit_of_measurement'] = element.encode('utf-8')[5:].decode('utf-8')
+          data[nr]['unit'] = element.encode('utf-8')[5:].decode('utf-8')
         # Timezone parsen
         if element.startswith('TZ'):
           data[nr]['tz'] = element.encode('utf-8')[2:].decode('utf-8')
@@ -93,7 +93,47 @@ while True:
   mqtt.connect(mqtt_server, mqtt_port)
   for nr, measurement in data.items():
   #  mqtt.publish("jarvis/water_level/"+nr, json.dumps(measurement, ensure_ascii=False))
-    mqtt.publish("homeassistant/sensor/pegel_"+nr+"/config/", json.dumps(measurement, ensure_ascii=False))
+    name = measurement.get("location") + "-" + measurement.get("water")
+    unit = measurement.get("unit")
+    level = measurement.get("level")
+    water = measurement.get("water")
+    location = measurement.get("location")
+    timest = measurement.get("timestamp")
+
+    autodiscover= mqtt.publish(
+        f"homeassistant/sensor/pegel_"+nr+"/config/", 
+        json.dumps(
+            {
+                "name": f"Pegel - {name}",
+                "state_topic": f"homeassistant/sensor/pegel_{nr}/state",
+                "json_attributes_topic": f"homeassistant/sensor/pegel_{nr}/attr",
+                "unit_of_measurement": unit")+,
+                "value_template": "{{ value_json.level }}",
+                "device": {
+                    "identifiers": ["pegel_bridge"],
+                    "manufacturer": "ML/LH",
+                    "model": "PEGEL OOE",
+                    "name": "PEGEL OOE",
+                },
+                "unique_id": f"PEGEL_{nr}",
+            }
+        ),
+    )
+    result_state = mqtt.publish(
+        f"homeassistant/sensor/pegel_{nr}/state",
+        json.dumps({"level": level}),
+    )
+    result_attrs = mqtt.publish(
+        f"homeassistant/sensor/pegel_{nr}/attr",
+        json.dumps(
+            {
+                "Water": water,
+                "Location": location,
+                "timestamp": timest,
+            }
+        ),
+    )
+    
   mqtt.disconnect()
   logging.info('Pegel Sendt')
   
