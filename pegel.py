@@ -105,7 +105,7 @@ while True:
         f"homeassistant/sensor/pegel_bridge/{nr}/config", 
         json.dumps(
             {
-                "name": f"Pegel - {name}",
+                "name": name,
                 "state_topic": f"homeassistant/sensor/pegel_{nr}/state",
                 "json_attributes_topic": f"homeassistant/sensor/pegel_{nr}/attr",
                 "unit_of_measurement": unit,
