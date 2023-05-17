@@ -96,7 +96,7 @@ while True:
   #  mqtt.publish("jarvis/water_level/"+nr, json.dumps(measurement, ensure_ascii=False))
     name = measurement.get("location") + "-" + measurement.get("water")
     unit = measurement.get("unit")
-    level = measurement.get("level")
+    level = measurement.get("value")
     water = measurement.get("water")
     location = measurement.get("location")
     timest = measurement.get("timestamp")
