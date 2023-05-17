@@ -9,7 +9,7 @@ import paho.mqtt.client as MQTT
 import os
 from sys import stdout
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger(__name__)
 logFormatter = logging.Formatter\
@@ -19,10 +19,10 @@ consoleHandler.setFormatter(logFormatter)
 logger.addHandler(consoleHandler)
 
 mqtt_server = os.environ.get('MQTT_SERVER')
-mqtt_port = int(os.environ.get('MQTT_PORT', 1883))
-mqtt_user = os.environ['MQTT_USER']
-mqtt_password = os.environ['MQTT_PASSWORD']
-sleep = int(os.environ.get('SLEEP',  15))
+mqtt_port = int(os.environ.get('MQTT_PORT', '1883'))
+mqtt_user = os.environ.get('MQTT_USER')
+mqtt_password = os.environ.get('MQTT_PASSWORD')
+sleep = int(os.environ.get('SLEEP',  '15'))
 
 while True:
 
@@ -49,7 +49,7 @@ while True:
         # ID parsen
         if element.startswith('SANR'):
           nr = element.encode('utf-8')[4:].decode('utf-8')
-          data[nr] = { 'id' : nr }
+          data[nr] = { 'unique_id' : nr }
         # Gewässer parsen
         if element.startswith('SWATER'):
           data[nr]['water'] = element.encode('utf-8')[6:].decode('utf-8')
@@ -58,7 +58,7 @@ while True:
           data[nr]['location'] = element.encode('utf-8')[5:].decode('utf-8')
         # Unit parsen
         if element.startswith('CUNIT'):
-          data[nr]['unit'] = element.encode('utf-8')[5:].decode('utf-8')
+          data[nr]['unit_of_measurement'] = element.encode('utf-8')[5:].decode('utf-8')
         # Timezone parsen
         if element.startswith('TZ'):
           data[nr]['tz'] = element.encode('utf-8')[2:].decode('utf-8')
@@ -92,8 +92,10 @@ while True:
     mqtt.username_pw_set(mqtt_user, mqtt_password)
   mqtt.connect(mqtt_server, mqtt_port)
   for nr, measurement in data.items():
-    mqtt.publish("jarvis/water_level/"+nr, json.dumps(measurement, ensure_ascii=False))
+  #  mqtt.publish("jarvis/water_level/"+nr, json.dumps(measurement, ensure_ascii=False))
+    mqtt.publish("homeassistant/sensor/"+nr+"/", json.dumps(measurement, ensure_ascii=False))
   mqtt.disconnect()
-
+  logging.info('Pegel Sendt')
+  
   # ein wenig schlafen
   time.sleep(60*sleep)
