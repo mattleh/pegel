@@ -101,7 +101,7 @@ while True:
     timest = measurement.get("timestamp")
 
     autodiscover= mqtt.publish(
-        f"homeassistant/sensor/pegel_"+nr+"/config/", 
+        f"homeassistant/sensor/pegel_bridge/{nr}/config/", 
         json.dumps(
             {
                 "name": f"Pegel - {name}",
