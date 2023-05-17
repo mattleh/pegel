@@ -107,7 +107,7 @@ while True:
                 "name": f"Pegel - {name}",
                 "state_topic": f"homeassistant/sensor/pegel_{nr}/state",
                 "json_attributes_topic": f"homeassistant/sensor/pegel_{nr}/attr",
-                "unit_of_measurement": unit")+,
+                "unit_of_measurement": unit,
                 "value_template": "{{ value_json.level }}",
                 "device": {
                     "identifiers": ["pegel_bridge"],
