@@ -130,7 +130,7 @@ while True:
             {
                 "Water": water,
                 "Location": location,
-                "timestamp": "{{ "+timest+" | timestamp_local }}",
+                "timestamp": "{{ "+str(timest)+" | timestamp_local }}",
             }
         ),
     )
