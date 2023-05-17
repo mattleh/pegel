@@ -24,6 +24,14 @@ mqtt_user = os.environ.get('MQTT_USER')
 mqtt_password = os.environ.get('MQTT_PASSWORD')
 sleep = int(os.environ.get('SLEEP',  '15'))
 
+# connect to MQTT Server and publish all items
+mqtt = MQTT.Client()
+mqtt.enable_logger(logger)
+
+if mqtt_user and mqtt_password:
+  mqtt.username_pw_set(mqtt_user, mqtt_password)
+mqtt.connect(mqtt_server, mqtt_port)
+
 while True:
 
   # daten abholen
@@ -84,13 +92,6 @@ while True:
   data['5230']['location'] = 'Weißenbach am Attersee'
   data['8445']['location'] = 'Roßleithen'
 
-  # connect to MQTT Server and publish all items
-  mqtt = MQTT.Client()
-  mqtt.enable_logger(logger)
-
-  if mqtt_user and mqtt_password:
-    mqtt.username_pw_set(mqtt_user, mqtt_password)
-  mqtt.connect(mqtt_server, mqtt_port)
   for nr, measurement in data.items():
   #  mqtt.publish("jarvis/water_level/"+nr, json.dumps(measurement, ensure_ascii=False))
     name = measurement.get("location") + "-" + measurement.get("water")
@@ -112,7 +113,7 @@ while True:
                 "device": {
                     "identifiers": ["pegel_bridge"],
                     "manufacturer": "ML/LH",
-                    "model": "PEGEL OOE",
+                    "model": "PEGEL OOE OPENDATA",
                     "name": "PEGEL OOE",
                 },
                 "unique_id": f"pegel_{nr}",
@@ -134,8 +135,9 @@ while True:
         ),
     )
     
-  mqtt.disconnect()
-  logging.info('Pegel Sendt')
+  print('Pegel Sendt')
   
   # ein wenig schlafen
   time.sleep(60*sleep)
+
+  mqtt.disconnect()
