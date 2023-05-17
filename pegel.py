@@ -93,7 +93,7 @@ while True:
   mqtt.connect(mqtt_server, mqtt_port)
   for nr, measurement in data.items():
   #  mqtt.publish("jarvis/water_level/"+nr, json.dumps(measurement, ensure_ascii=False))
-    mqtt.publish("homeassistant/sensor/pegel_"+nr+"/", json.dumps(measurement, ensure_ascii=False))
+    mqtt.publish("homeassistant/sensor/pegel_"+nr+"/config/", json.dumps(measurement, ensure_ascii=False))
   mqtt.disconnect()
   logging.info('Pegel Sendt')
   
