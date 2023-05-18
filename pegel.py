@@ -125,7 +125,7 @@ while True:
         stationresp = urlopen(url)
         stationdata.append(json.loads(stationresp.read()))
 
-        for set in data:
+        for set in stationdata:
           for entry in set:
               id = entry.get("station_no")
               shortname = entry.get("ts_shortname").split(".")[1]
