@@ -123,7 +123,7 @@ while True:
   
     for url in urls:
         stationresp = urlopen(url)
-        stationdata.append(json.loads(response.read()))
+        stationdata.append(json.loads(stationresp.read()))
 
         for set in data:
           for entry in set:
