@@ -206,7 +206,7 @@ while True:
     else:
       mw = ""
 
-    autodiscover= mqtt.publish(
+    mqtt.publish(
         f"homeassistant/sensor/pegel_bridge/{nr}/config", 
         json.dumps(
             {
@@ -225,11 +225,13 @@ while True:
             }
         ),
     )
-    result_state = mqtt.publish(
+  
+    mqtt.publish(
         f"homeassistant/sensor/pegel_{nr}/state",
         json.dumps({"level": level}),
     )
-    result_attrs = mqtt.publish(
+  
+    mqtt.publish(
         f"homeassistant/sensor/pegel_{nr}/attr",
         json.dumps(
             {
