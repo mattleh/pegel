@@ -139,7 +139,7 @@ while True:
               try:
                 data[id][shortname] = entry.get("data")[-1][1]
               except:
-                print(f"no data for {name} {shortname}")
+                pass
 
     if data[nr].get("Voralarm"):
       voralarm = data[nr].get("Voralarm")
