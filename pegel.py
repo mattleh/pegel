@@ -107,6 +107,7 @@ while True:
   data['8445']['location'] = 'Roßleithen'
   
   if flag_connected == 0:
+      print("connecting mqtt")  
       if mqtt_user and mqtt_password:
           mqtt.username_pw_set(mqtt_user, mqtt_password)
       mqtt.connect(mqtt_server, mqtt_port)
