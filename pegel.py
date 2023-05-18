@@ -132,8 +132,7 @@ while True:
               try:
                 data[id][shortname] = entry.get("data")[-1][1]
               except:
-                print("out of range -1")
-                print(entry.get("data"))
+                print("no data for "+ data[id][shortname])
 
     name = measurement.get("location") + "-" + measurement.get("water")
     unit = measurement.get("unit")
