@@ -129,7 +129,10 @@ while True:
           for entry in set:
               id = entry.get("station_no")
               shortname = entry.get("ts_shortname").split(".")[1]
-              data[id][shortname] = entry.get("data")[-1][1]
+              try:
+                data[id][shortname] = entry.get("data")[-1][1]
+              except:
+                print(entry.get("data"))
 
     name = measurement.get("location") + "-" + measurement.get("water")
     unit = measurement.get("unit")
