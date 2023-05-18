@@ -121,6 +121,13 @@ while True:
         f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/ltv.json"
     }
   
+    name = measurement.get("location") + "-" + measurement.get("water")
+    unit = measurement.get("unit")
+    level = measurement.get("value")
+    water = measurement.get("water")
+    location = measurement.get("location")
+    timest = measurement.get("timestamp")
+
     for url in urls:
         stationresp = urlopen(url)
         stationdata.append(json.loads(stationresp.read()))
@@ -132,14 +139,7 @@ while True:
               try:
                 data[id][shortname] = entry.get("data")[-1][1]
               except:
-                print("no data for "+ data[id][shortname])
-
-    name = measurement.get("location") + "-" + measurement.get("water")
-    unit = measurement.get("unit")
-    level = measurement.get("value")
-    water = measurement.get("water")
-    location = measurement.get("location")
-    timest = measurement.get("timestamp")
+                print(f"no data for {name} {shortname}")
 
     if data[nr].get("Voralarm"):
       voralarm = data[nr].get("Voralarm")
