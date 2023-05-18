@@ -8,6 +8,7 @@ import time
 import paho.mqtt.client as MQTT
 import os
 from sys import stdout
+import atexit
 
 logging.basicConfig(level=logging.INFO)
 
@@ -24,9 +25,26 @@ mqtt_user = os.environ.get('MQTT_USER')
 mqtt_password = os.environ.get('MQTT_PASSWORD')
 sleep = int(os.environ.get('SLEEP',  '15'))
 
+flag_connected = 0
+
+def on_connect(client, userdata, flags, rc):
+   global flag_connected
+   flag_connected = 1
+
+def on_disconnect(client, userdata, rc):
+   global flag_connected
+   flag_connected = 0
+
 # connect to MQTT Server and publish all items
 mqtt = MQTT.Client("pegel-bridge")
+mqtt.on_connect = on_connect
+mqtt.on_disconnect = on_disconnect
 mqtt.enable_logger(logger)
+
+def exit_handler():
+    mqtt.disconnect()
+
+atexit.register(exit_handler)
 
 while True:
 
@@ -87,11 +105,11 @@ while True:
   data['9450']['location'] = 'Unterweißenbach'
   data['5230']['location'] = 'Weißenbach am Attersee'
   data['8445']['location'] = 'Roßleithen'
-
-  if mqtt_user and mqtt_password:
-      mqtt.username_pw_set(mqtt_user, mqtt_password)
-  mqtt.connect(mqtt_server, mqtt_port)
-
+  
+  if flag_connected == 0:
+      if mqtt_user and mqtt_password:
+          mqtt.username_pw_set(mqtt_user, mqtt_password)
+      mqtt.connect(mqtt_server, mqtt_port)
 
   for nr, measurement in data.items():
   #  mqtt.publish("jarvis/water_level/"+nr, json.dumps(measurement, ensure_ascii=False))
@@ -141,5 +159,3 @@ while True:
   
   # ein wenig schlafen
   time.sleep(60*sleep)
-
-  mqtt.disconnect()
