@@ -190,6 +190,10 @@ def publish_mqtt(nr):
       )
 #%%
 while True:
+  #%%
+  while flag_connected == 0:
+     print('connecting')
+     time.sleep(30)
   # %%
   data = get_pegel()
 
