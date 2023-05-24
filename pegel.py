@@ -159,7 +159,7 @@ while True:
   
     mqtt.publish(
         f"homeassistant/sensor/pegel_{nr}/state",
-        json.dumps({"level": data[nr]['level']}),
+        json.dumps({"level": data[nr]['value']}),
     )
   
     mqtt.publish(
