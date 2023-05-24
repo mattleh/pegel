@@ -39,11 +39,14 @@ def on_disconnect(client, userdata, rc):
    flag_connected = 0
 
 def connect_mqtt():
-  if flag_connected == 0:
+    if mqtt_user and mqtt_password:
+        mqtt.username_pw_set(mqtt_user, mqtt_password)
+    mqtt.connect(mqtt_server, mqtt_port)  
+    mqtt.loop_start()
+    
+if flag_connected == 0:
       print("connecting mqtt")  
-      if mqtt_user and mqtt_password:
-          mqtt.username_pw_set(mqtt_user, mqtt_password)
-      mqtt.connect(mqtt_server, mqtt_port)  
+      connect_mqtt()
 
 # connect to MQTT Server and publish all items
 mqtt = MQTT.Client("pegel-bridge")
@@ -135,8 +138,7 @@ while True:
                 data[nr][shortname] = entry.get("data")[-1][1]
               else:
                 data[nr][shortname] = ''  
-                
-      connect_mqtt()
+
       # publish config to mqtt HA
       mqtt.publish(
           f"homeassistant/sensor/pegel_bridge/{nr}/config", 
