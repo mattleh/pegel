@@ -29,7 +29,7 @@ mqtt_user = os.environ.get('MQTT_USER')
 mqtt_password = os.environ.get('MQTT_PASSWORD')
 sleep = int(os.environ.get('SLEEP',  '15'))
 
-# connect to MQTT Server and publish all items
+# MQTT init
 mqtt = MQTT.Client("pegel-bridge")
 flag_connected = 0
 
