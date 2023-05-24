@@ -116,7 +116,7 @@ while True:
       elements = line.split(' ')
       # erstes Element: Timecode parsen und in Unix-Timestamp verwandeln
       #timestamp = int(datetime.datetime.strptime(elements[0], "%Y%m%d%H%M%S").timestamp())
-      timestamp = parser.parse(f'{elements[0]} {data[nr].get("tz")}')
+      timestamp = parser.parse(f'{elements[0]} {data[nr].get("tz")[:3]} {data[nr].get("tz")[3:]}')
       # zweites Element: Höhe in cm, allerdings gibt es ungültige Messwerte mit negativen Werten
       value = int(elements[1])
       # Timestamp und Value ersetzen, wenn es einen aktuelleren, gültigen Wert in der aktuellen Zeile gibt
@@ -162,32 +162,29 @@ while True:
         json.dumps({"level": data[nr]['value']}),
     )
 
-    try:
-        mqtt.publish(
-            f"homeassistant/sensor/pegel_{nr}/attr",
-            json.dumps(
-                {
-                    "Water": data[nr]['water'],
-                    "Location": data[nr]['location'],
-                    "timestamp": data[nr]['timestamp'].isoformat(),
-                    "Voralarm": data[nr]['Voralarm'],
-                    "Alarm1": data[nr]['Alarm1'],
-                    "Alarm2": data[nr]['Alarm2'],
-                    "Alarm3": data[nr]['Alarm3'],
-                    "Last_Event": data[nr]['Event'],
-                    "HW1": data[nr]['HW1'],
-                    "HW2": data[nr]['HW2'],
-                    "HW5": data[nr]['HW5'],
-                    "HW10": data[nr]['HW10'],
-                    "HW30": data[nr]['HW30'],
-                    "HW100": data[nr]['HW100'],
-                    "Niederwasser": data[nr]['NW'],
-                    "Mittelwasser": data[nr]['MW'],
-                }
-            ),
-        )
-    except:
-        print(nr)
+    mqtt.publish(
+        f"homeassistant/sensor/pegel_{nr}/attr",
+        json.dumps(
+            {
+                "Water": data[nr]['water'],
+                "Location": data[nr]['location'],
+                "timestamp": data[nr]['timestamp'].isoformat(),
+                "Voralarm": data[nr]['Voralarm'],
+                "Alarm1": data[nr]['Alarm1'],
+                "Alarm2": data[nr]['Alarm2'],
+                "Alarm3": data[nr]['Alarm3'],
+                "Last_Event": data[nr]['Event'],
+                "HW1": data[nr]['HW1'],
+                "HW2": data[nr]['HW2'],
+                "HW5": data[nr]['HW5'],
+                "HW10": data[nr]['HW10'],
+                "HW30": data[nr]['HW30'],
+                "HW100": data[nr]['HW100'],
+                "Niederwasser": data[nr]['NW'],
+                "Mittelwasser": data[nr]['MW'],
+            }
+        ),
+    )
     
   print('Pegel Sendt')
   
