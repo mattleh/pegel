@@ -62,7 +62,7 @@ while True:
   for line in response.iter_lines():
     # Headerzeilen parsen
     
-    if line.decode('latin1').startswith('#') and '|' in line.decode('latin1'):
+    if line.decode('latin1').startswith('#') and '|' in line.decode('latin1') or len(line) == 0:
       # erstes Zeichen wegschnippseln und nach | trennen und iterieren
       if new_entry:
         urls = {f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/alm.json",
@@ -79,9 +79,9 @@ while True:
                 id = entry.get("station_no")
                 shortname = entry.get("ts_shortname").split(".")[1]
                 if len(entry.get("data")) > 0:
-                  data[id][shortname] = entry.get("data")[-1][1]
+                  data[nr][shortname] = entry.get("data")[-1][1]
                 else:
-                  data[id][shortname] = ''  
+                  data[nr][shortname] = ''  
 
       new_entry = False
       line = line[1:]
