@@ -66,6 +66,7 @@ while True:
   response = requests.get('http://data.ooe.gv.at/files/hydro/HDOOE_Export_OG.zrxp')
 
   data = {}
+  data.clear()
   nr = None
   # über alle Zeilen iterieren. Die Response ist so aufgebaut, dass immer zuerst
   # der Header kommt und anschließend die zugehörigen Datenzeilen
@@ -189,9 +190,7 @@ while True:
               }
           ),
       )
-
-  mqtt.loop() 
+      mqtt.loop() 
   print('Pegel Sendt')
-  
   # ein wenig schlafen
   time.sleep(60*sleep)
