@@ -38,6 +38,13 @@ def on_disconnect(client, userdata, rc):
    global flag_connected
    flag_connected = 0
 
+def connect_mqtt():
+  if flag_connected == 0:
+      print("connecting mqtt")  
+      if mqtt_user and mqtt_password:
+          mqtt.username_pw_set(mqtt_user, mqtt_password)
+      mqtt.connect(mqtt_server, mqtt_port)  
+
 # connect to MQTT Server and publish all items
 mqtt = MQTT.Client("pegel-bridge")
 mqtt.on_connect = on_connect
@@ -48,7 +55,7 @@ def exit_handler():
     mqtt.disconnect()
 
 atexit.register(exit_handler)
-
+#%%
 while True:
   # %%
   # daten abholen
@@ -109,12 +116,6 @@ while True:
   data['8445']['location'] = 'Roßleithen'
   
   # %%
-  if flag_connected == 0:
-      print("connecting mqtt")  
-      if mqtt_user and mqtt_password:
-          mqtt.username_pw_set(mqtt_user, mqtt_password)
-      mqtt.connect(mqtt_server, mqtt_port)
-
   for nr, measurement in data.items():
       # get and add additional data from web
       urls = {f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/alm.json",
@@ -134,7 +135,8 @@ while True:
                 data[nr][shortname] = entry.get("data")[-1][1]
               else:
                 data[nr][shortname] = ''  
-
+                
+      connect_mqtt()
       # publish config to mqtt HA
       mqtt.publish(
           f"homeassistant/sensor/pegel_bridge/{nr}/config", 
