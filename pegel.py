@@ -138,16 +138,16 @@ def get_pegel():
     
     return data
 
-def publish_mqtt(nr):
+def publish_mqtt(item):
     # publish config to mqtt HA
     mqtt.publish(
-          f"homeassistant/sensor/pegel_bridge/{nr}/config", 
+          f"homeassistant/sensor/pegel_bridge/{item[0]}/config", 
           json.dumps(
               {
-                  "name": f'{data[nr]["location"]} {data[nr]["water"]}',
-                  "state_topic": f"homeassistant/sensor/pegel_{nr}/state",
-                  "json_attributes_topic": f"homeassistant/sensor/pegel_{nr}/attr",
-                  "unit_of_measurement": data[nr]['unit'],
+                  "name": item[1]["location"] +' '+ item[1]["water"],
+                  "state_topic": f"homeassistant/sensor/pegel_{item[0]}/state",
+                  "json_attributes_topic": f"homeassistant/sensor/pegel_{item[0]}/attr",
+                  "unit_of_measurement": item[1]['unit'],
                   "value_template": "{{ value_json.level }}",
                   "device": {
                       "identifiers": ["pegel_bridge"],
@@ -155,36 +155,36 @@ def publish_mqtt(nr):
                       "model": "PEGEL OOE OPENDATA",
                       "name": "PEGEL OOE",
                   },
-                  "unique_id": f"pegel_{nr}",
+                  "unique_id": f"pegel_{item[0]}",
               }
           ),
       )
     # publish value to mqtt HA
     mqtt.publish(
-          f"homeassistant/sensor/pegel_{nr}/state",
-          json.dumps({"level": data[nr]['value']}),
+          f"homeassistant/sensor/pegel_{item[0]}/state",
+          json.dumps({"level": item[1]['value']}),
       )
     # publish additional data to mqtt HA
     mqtt.publish(
-          f"homeassistant/sensor/pegel_{nr}/attr",
+          f"homeassistant/sensor/pegel_{item[0]}/attr",
           json.dumps(
               {
-                  "Water": data[nr]['water'],
-                  "Location": data[nr]['location'],
-                  "timestamp": data[nr]['timestamp'].isoformat(),
-                  "Voralarm": data[nr]['Voralarm'],
-                  "Alarm1": data[nr]['Alarm1'],
-                  "Alarm2": data[nr]['Alarm2'],
-                  "Alarm3": data[nr]['Alarm3'],
-                  "Last_Event": data[nr]['Event'],
-                  "HW1": data[nr]['HW1'],
-                  "HW2": data[nr]['HW2'],
-                  "HW5": data[nr]['HW5'],
-                  "HW10": data[nr]['HW10'],
-                  "HW30": data[nr]['HW30'],
-                  "HW100": data[nr]['HW100'],
-                  "Niederwasser": data[nr]['NW'],
-                  "Mittelwasser": data[nr]['MW'],
+                  "Water": item[1]['water'],
+                  "Location": item[1]['location'],
+                  "timestamp": item[1]['timestamp'].isoformat(),
+                  "Voralarm": item[1]['Voralarm'],
+                  "Alarm1": item[1]['Alarm1'],
+                  "Alarm2": item[1]['Alarm2'],
+                  "Alarm3": item[1]['Alarm3'],
+                  "Last_Event": item[1]['Event'],
+                  "HW1": item[1]['HW1'],
+                  "HW2": item[1]['HW2'],
+                  "HW5": item[1]['HW5'],
+                  "HW10": item[1]['HW10'],
+                  "HW30": item[1]['HW30'],
+                  "HW100": item[1]['HW100'],
+                  "Niederwasser": item[1]['NW'],
+                  "Mittelwasser": item[1]['MW'],
               }
           ),
       )
@@ -201,6 +201,7 @@ while True:
   for nr in data.items():
       publish_mqtt(nr)
   print('Pegel Sendt')
+
   gc.collect()
   # ein wenig schlafen
   time.sleep(60*sleep)
