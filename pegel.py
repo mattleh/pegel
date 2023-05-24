@@ -161,30 +161,33 @@ while True:
         f"homeassistant/sensor/pegel_{nr}/state",
         json.dumps({"level": data[nr]['value']}),
     )
-  
-    mqtt.publish(
-        f"homeassistant/sensor/pegel_{nr}/attr",
-        json.dumps(
-            {
-                "Water": data[nr]['water'],
-                "Location": data[nr]['location'],
-                "timestamp": data[nr]['timestamp'].isoformat(),
-                "Voralarm": data[nr]['Voralarm'],
-                "Alarm1": data[nr]['Alarm1'],
-                "Alarm2": data[nr]['Alarm2'],
-                "Alarm3": data[nr]['Alarm3'],
-                "Last_Event": data[nr]['Event'],
-                "HW1": data[nr]['HW1'],
-                "HW2": data[nr]['HW2'],
-                "HW5": data[nr]['HW5'],
-                "HW10": data[nr]['HW10'],
-                "HW30": data[nr]['HW30'],
-                "HW100": data[nr]['HW100'],
-                "Niederwasser": data[nr]['NW'],
-                "Mittelwasser": data[nr]['MW'],
-            }
-        ),
-    )
+
+    try:
+        mqtt.publish(
+            f"homeassistant/sensor/pegel_{nr}/attr",
+            json.dumps(
+                {
+                    "Water": data[nr]['water'],
+                    "Location": data[nr]['location'],
+                    "timestamp": data[nr]['timestamp'].isoformat(),
+                    "Voralarm": data[nr]['Voralarm'],
+                    "Alarm1": data[nr]['Alarm1'],
+                    "Alarm2": data[nr]['Alarm2'],
+                    "Alarm3": data[nr]['Alarm3'],
+                    "Last_Event": data[nr]['Event'],
+                    "HW1": data[nr]['HW1'],
+                    "HW2": data[nr]['HW2'],
+                    "HW5": data[nr]['HW5'],
+                    "HW10": data[nr]['HW10'],
+                    "HW30": data[nr]['HW30'],
+                    "HW100": data[nr]['HW100'],
+                    "Niederwasser": data[nr]['NW'],
+                    "Mittelwasser": data[nr]['MW'],
+                }
+            ),
+        )
+    except:
+        print(nr)
     
   print('Pegel Sendt')
   
