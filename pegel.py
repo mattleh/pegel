@@ -168,7 +168,7 @@ while True:
             {
                 "Water": data[nr]['water'],
                 "Location": data[nr]['location'],
-                "timestamp": data[nr]['timestamp'],
+                "timestamp": data[nr]['timestamp'].isoformat(),
                 "Voralarm": data[nr]['Voralarm'],
                 "Alarm1": data[nr]['Alarm1'],
                 "Alarm2": data[nr]['Alarm2'],
