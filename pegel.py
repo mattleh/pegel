@@ -56,34 +56,13 @@ while True:
 
   data = {}
   nr = None
-  new_entry = False
   # über alle Zeilen iterieren. Die Response ist so aufgebaut, dass immer zuerst
   # der Header kommt und anschließend die zugehörigen Datenzeilen
   for line in response.iter_lines():
     # Headerzeilen parsen
-    
-    if line.decode('latin1').startswith('#') and '|' in line.decode('latin1') or len(line) == 0:
+
+    if line.decode('latin1').startswith('#') and '|' in line.decode('latin1'):
       # erstes Zeichen wegschnippseln und nach | trennen und iterieren
-      if new_entry:
-        urls = {f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/alm.json",
-        f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/events.json",
-        f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/ltv.json"
-    }
-        for url in urls:
-          stationdata = []
-          stationresp = urlopen(url)
-          stationdata.append(json.loads(stationresp.read()))
-
-          for set in stationdata:
-            for entry in set:
-                id = entry.get("station_no")
-                shortname = entry.get("ts_shortname").split(".")[1]
-                if len(entry.get("data")) > 0:
-                  data[nr][shortname] = entry.get("data")[-1][1]
-                else:
-                  data[nr][shortname] = ''  
-
-      new_entry = False
       line = line[1:]
       elements = line.split(b'|')
       for element in elements:
@@ -137,54 +116,74 @@ while True:
       mqtt.connect(mqtt_server, mqtt_port)
 
   for nr, measurement in data.items():
-    mqtt.publish(
-        f"homeassistant/sensor/pegel_bridge/{nr}/config", 
-        json.dumps(
-            {
-                "name": measurement.get("location") + "-" + measurement.get("water"),
-                "state_topic": f"homeassistant/sensor/pegel_{nr}/state",
-                "json_attributes_topic": f"homeassistant/sensor/pegel_{nr}/attr",
-                "unit_of_measurement": data[nr]['unit'],
-                "value_template": "{{ value_json.level }}",
-                "device": {
-                    "identifiers": ["pegel_bridge"],
-                    "manufacturer": "ML/LH",
-                    "model": "PEGEL OOE OPENDATA",
-                    "name": "PEGEL OOE",
-                },
-                "unique_id": f"pegel_{nr}",
-            }
-        ),
-    )
-  
-    mqtt.publish(
-        f"homeassistant/sensor/pegel_{nr}/state",
-        json.dumps({"level": data[nr]['value']}),
-    )
+      # get and add additional data from web
+      urls = {f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/alm.json",
+      f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/events.json",
+      f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/ltv.json"
+      }
+      for url in urls:
+        stationdata = []
+        stationresp = urlopen(url)
+        stationdata.append(json.loads(stationresp.read()))
 
-    mqtt.publish(
-        f"homeassistant/sensor/pegel_{nr}/attr",
-        json.dumps(
-            {
-                "Water": data[nr]['water'],
-                "Location": data[nr]['location'],
-                "timestamp": data[nr]['timestamp'].isoformat(),
-                "Voralarm": data[nr]['Voralarm'],
-                "Alarm1": data[nr]['Alarm1'],
-                "Alarm2": data[nr]['Alarm2'],
-                "Alarm3": data[nr]['Alarm3'],
-                "Last_Event": data[nr]['Event'],
-                "HW1": data[nr]['HW1'],
-                "HW2": data[nr]['HW2'],
-                "HW5": data[nr]['HW5'],
-                "HW10": data[nr]['HW10'],
-                "HW30": data[nr]['HW30'],
-                "HW100": data[nr]['HW100'],
-                "Niederwasser": data[nr]['NW'],
-                "Mittelwasser": data[nr]['MW'],
-            }
-        ),
-    )
+        for set in stationdata:
+          for entry in set:
+              id = entry.get("station_no")
+              shortname = entry.get("ts_shortname").split(".")[1]
+              if len(entry.get("data")) > 0:
+                data[nr][shortname] = entry.get("data")[-1][1]
+              else:
+                data[nr][shortname] = ''  
+
+      # publish config to mqtt HA
+      mqtt.publish(
+          f"homeassistant/sensor/pegel_bridge/{nr}/config", 
+          json.dumps(
+              {
+                  "name": measurement.get("location") + "-" + measurement.get("water"),
+                  "state_topic": f"homeassistant/sensor/pegel_{nr}/state",
+                  "json_attributes_topic": f"homeassistant/sensor/pegel_{nr}/attr",
+                  "unit_of_measurement": data[nr]['unit'],
+                  "value_template": "{{ value_json.level }}",
+                  "device": {
+                      "identifiers": ["pegel_bridge"],
+                      "manufacturer": "ML/LH",
+                      "model": "PEGEL OOE OPENDATA",
+                      "name": "PEGEL OOE",
+                  },
+                  "unique_id": f"pegel_{nr}",
+              }
+          ),
+      )
+      # publish value to mqtt HA
+      mqtt.publish(
+          f"homeassistant/sensor/pegel_{nr}/state",
+          json.dumps({"level": data[nr]['value']}),
+      )
+      # publish additional data to mqtt HA
+      mqtt.publish(
+          f"homeassistant/sensor/pegel_{nr}/attr",
+          json.dumps(
+              {
+                  "Water": data[nr]['water'],
+                  "Location": data[nr]['location'],
+                  "timestamp": data[nr]['timestamp'].isoformat(),
+                  "Voralarm": data[nr]['Voralarm'],
+                  "Alarm1": data[nr]['Alarm1'],
+                  "Alarm2": data[nr]['Alarm2'],
+                  "Alarm3": data[nr]['Alarm3'],
+                  "Last_Event": data[nr]['Event'],
+                  "HW1": data[nr]['HW1'],
+                  "HW2": data[nr]['HW2'],
+                  "HW5": data[nr]['HW5'],
+                  "HW10": data[nr]['HW10'],
+                  "HW30": data[nr]['HW30'],
+                  "HW100": data[nr]['HW100'],
+                  "Niederwasser": data[nr]['NW'],
+                  "Mittelwasser": data[nr]['MW'],
+              }
+          ),
+      )
     
   print('Pegel Sendt')
   
