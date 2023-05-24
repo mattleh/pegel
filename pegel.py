@@ -48,8 +48,6 @@ mqtt.enable_logger(logger)
 
 if mqtt_user and mqtt_password:
     mqtt.username_pw_set(mqtt_user, mqtt_password)
-mqtt.connect(mqtt_server, mqtt_port)  
-mqtt.loop_start()
 
 def exit_handler():
     mqtt.disconnect()
@@ -57,6 +55,8 @@ def exit_handler():
 atexit.register(exit_handler)
 #%%
 while True:
+  mqtt.connect(mqtt_server, mqtt_port)  
+  mqtt.loop_start()
   # %%
   # daten abholen
   response = requests.get('http://data.ooe.gv.at/files/hydro/HDOOE_Export_OG.zrxp')
@@ -189,5 +189,8 @@ while True:
   #data.clear()
   #stationdata.clear()
   gc.collect()
+  # Cleanup
+  mqtt.disconnect()
+  mqtt.loop_stop()
   # ein wenig schlafen
   time.sleep(60*sleep)
