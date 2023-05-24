@@ -185,7 +185,6 @@ while True:
               }
           ),
       )
-      mqtt.wait_for_publish()
   print('Pegel Sendt')
   #data.clear()
   #stationdata.clear()
