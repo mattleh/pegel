@@ -37,16 +37,17 @@ def on_connect(client, userdata, flags, rc):
 def on_disconnect(client, userdata, rc):
    global flag_connected
    flag_connected = 0
+   mqtt.loop_stop()
 
 def connect_mqtt():
     if mqtt_user and mqtt_password:
         mqtt.username_pw_set(mqtt_user, mqtt_password)
     mqtt.connect(mqtt_server, mqtt_port)  
     mqtt.loop_start()
-    
+
 if flag_connected == 0:
       print("connecting mqtt")  
-      connect_mqtt()
+      connect_mqtt
 
 # connect to MQTT Server and publish all items
 mqtt = MQTT.Client("pegel-bridge")
