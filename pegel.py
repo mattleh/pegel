@@ -11,6 +11,7 @@ import os
 from sys import stdout
 import atexit
 from urllib.request import urlopen
+import gc
 
 # %%
 logging.basicConfig(level=logging.INFO)
@@ -61,7 +62,6 @@ while True:
   response = requests.get('http://data.ooe.gv.at/files/hydro/HDOOE_Export_OG.zrxp')
 
   data = {}
-  data.clear()
   nr = None
   # über alle Zeilen iterieren. Die Response ist so aufgebaut, dass immer zuerst
   # der Header kommt und anschließend die zugehörigen Datenzeilen
@@ -185,6 +185,10 @@ while True:
               }
           ),
       )
+      mqtt.wait_for_publish()
   print('Pegel Sendt')
+  #data.clear()
+  #stationdata.clear()
+  gc.collect()
   # ein wenig schlafen
   time.sleep(60*sleep)
