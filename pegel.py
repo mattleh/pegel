@@ -116,7 +116,7 @@ while True:
       elements = line.split(' ')
       # erstes Element: Timecode parsen und in Unix-Timestamp verwandeln
       #timestamp = int(datetime.datetime.strptime(elements[0], "%Y%m%d%H%M%S").timestamp())
-      timestamp = parser.parse(f'{elements[0]} {data[nr].get("tz")[:3]} {data[nr].get("tz")[3:]}')
+      timestamp = parser.parse(f'{elements[0]} {data[nr].get("tz")[3:]}')
       # zweites Element: Höhe in cm, allerdings gibt es ungültige Messwerte mit negativen Werten
       value = int(elements[1])
       # Timestamp und Value ersetzen, wenn es einen aktuelleren, gültigen Wert in der aktuellen Zeile gibt
