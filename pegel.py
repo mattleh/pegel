@@ -189,7 +189,8 @@ while True:
               }
           ),
       )
-    
+
+  mqtt.loop() 
   print('Pegel Sendt')
   
   # ein wenig schlafen
