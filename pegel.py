@@ -144,10 +144,10 @@ def publish_mqtt(item):
           f"homeassistant/sensor/pegel_bridge/{item[0]}/config", 
           json.dumps(
               {
-                  "name": item[1]["location"] +' '+ item[1]["water"],
+                  "name": item[1].get("location") +' '+ item[1].get("water"),
                   "state_topic": f"homeassistant/sensor/pegel_{item[0]}/state",
                   "json_attributes_topic": f"homeassistant/sensor/pegel_{item[0]}/attr",
-                  "unit_of_measurement": item[1]['unit'],
+                  "unit_of_measurement": item[1].get('unit'),
                   "value_template": "{{ value_json.level }}",
                   "device": {
                       "identifiers": ["pegel_bridge"],
@@ -162,29 +162,29 @@ def publish_mqtt(item):
     # publish value to mqtt HA
     mqtt.publish(
           f"homeassistant/sensor/pegel_{item[0]}/state",
-          json.dumps({"level": item[1]['value']}),
+          json.dumps({"level": item[1].get('value')}),
       )
     # publish additional data to mqtt HA
     mqtt.publish(
           f"homeassistant/sensor/pegel_{item[0]}/attr",
           json.dumps(
               {
-                  "Water": item[1]['water'],
-                  "Location": item[1]['location'],
-                  "timestamp": item[1]['timestamp'].isoformat(),
-                  "Voralarm": item[1]['Voralarm'],
-                  "Alarm1": item[1]['Alarm1'],
-                  "Alarm2": item[1]['Alarm2'],
-                  "Alarm3": item[1]['Alarm3'],
-                  "Last_Event": item[1]['Event'],
-                  "HW1": item[1]['HW1'],
-                  "HW2": item[1]['HW2'],
-                  "HW5": item[1]['HW5'],
-                  "HW10": item[1]['HW10'],
-                  "HW30": item[1]['HW30'],
-                  "HW100": item[1]['HW100'],
-                  "Niederwasser": item[1]['NW'],
-                  "Mittelwasser": item[1]['MW'],
+                  "Water": item[1].get('water'),
+                  "Location": item[1].get('location'),
+                  "timestamp": f"{str(nr[1].get('timestamp').isoformat()) if nr[1].get('timestamp') is not None else 'null'}",
+                  "Voralarm": item[1].get('Voralarm'),
+                  "Alarm1": item[1].get('Alarm1'),
+                  "Alarm2": item[1].get('Alarm2'),
+                  "Alarm3": item[1].get('Alarm3'),
+                  "Last_Event": item[1].get('Event'),
+                  "HW1": item[1].get('HW1'),
+                  "HW2": item[1].get('HW2'),
+                  "HW5": item[1].get('HW5'),
+                  "HW10": item[1].get('HW10'),
+                  "HW30": item[1].get('HW30'),
+                  "HW100": item[1].get('HW100'),
+                  "Niederwasser": item[1].get('NW'),
+                  "Mittelwasser": item[1].get('MW'),
               }
           ),
       )
@@ -199,6 +199,7 @@ while True:
 
   # %%
   for nr in data.items():
+      print(nr)
       publish_mqtt(nr)
   print('Pegel Sendt')
 
