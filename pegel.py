@@ -199,7 +199,6 @@ while True:
 
   # %%
   for nr in data.items():
-      print(nr)
       publish_mqtt(nr)
   print('Pegel Sendt')
 
