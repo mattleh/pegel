@@ -14,26 +14,6 @@ from urllib.request import urlopen
 import gc
 import multiprocessing as mp
 
-# %%
-logging.basicConfig(level=logging.INFO)
-
-logger = logging.getLogger(__name__)
-logFormatter = logging.Formatter\
-("%(name)-12s %(asctime)s %(levelname)-8s %(filename)s:%(funcName)s %(message)s")
-consoleHandler = logging.StreamHandler(stdout) #set streamhandler to stdout
-consoleHandler.setFormatter(logFormatter)
-logger.addHandler(consoleHandler)
-
-mqtt_server = os.environ.get('MQTT_SERVER')
-mqtt_port = int(os.environ.get('MQTT_PORT', '1883'))
-mqtt_user = os.environ.get('MQTT_USER')
-mqtt_password = os.environ.get('MQTT_PASSWORD')
-sleep = int(os.environ.get('SLEEP',  '15'))
-
-# connect to MQTT Server and publish all items
-mqtt = MQTT.Client("pegel-bridge")
-flag_connected = 0
-
 def on_connect(mqtt, userdata, flags, rc):
    global flag_connected
    flag_connected = 1
@@ -41,15 +21,6 @@ def on_connect(mqtt, userdata, flags, rc):
 def on_disconnect(mqtt, userdata, rc):
    global flag_connected
    flag_connected = 0
-
-mqtt.on_connect = on_connect
-mqtt.on_disconnect = on_disconnect
-mqtt.enable_logger(logger)
-
-if mqtt_user and mqtt_password:
-    mqtt.username_pw_set(mqtt_user, mqtt_password)
-mqtt.connect(mqtt_server, mqtt_port)  
-mqtt.loop_start()
 
 def exit_handler():
     mqtt.disconnect()
@@ -198,12 +169,40 @@ def publish_mqtt(item):
 #%%
 
 #%%
-while flag_connected == 0:
-  print('connecting')
-  time.sleep(30)
-
 data = get_pegel()
 if __name__ == '__main__':
+  logging.basicConfig(level=logging.INFO)
+
+  logger = logging.getLogger(__name__)
+  logFormatter = logging.Formatter\
+  ("%(name)-12s %(asctime)s %(levelname)-8s %(filename)s:%(funcName)s %(message)s")
+  consoleHandler = logging.StreamHandler(stdout) #set streamhandler to stdout
+  consoleHandler.setFormatter(logFormatter)
+  logger.addHandler(consoleHandler)
+
+  mqtt_server = os.environ.get('MQTT_SERVER')
+  mqtt_port = int(os.environ.get('MQTT_PORT', '1883'))
+  mqtt_user = os.environ.get('MQTT_USER')
+  mqtt_password = os.environ.get('MQTT_PASSWORD')
+  sleep = int(os.environ.get('SLEEP',  '15'))
+
+  # connect to MQTT Server and publish all items
+  mqtt = MQTT.Client("pegel-bridge")
+  flag_connected = 0
+
+  mqtt.on_connect = on_connect
+  mqtt.on_disconnect = on_disconnect
+  mqtt.enable_logger(logger)
+
+  if mqtt_user and mqtt_password:
+      mqtt.username_pw_set(mqtt_user, mqtt_password)
+  mqtt.connect(mqtt_server, mqtt_port)  
+  mqtt.loop_start()
+
+  while flag_connected == 0:
+    print('connecting')
+    time.sleep(30)
+    
   print('connected')
   data2lastsync = datetime.datetime.now()
   data2 = {}
