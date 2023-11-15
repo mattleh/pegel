@@ -141,20 +141,6 @@ def get_pegel():
     data['8445']['location'] = 'Roßleithen'
 
 #%%
-    urls = []
-    for item in data.items():
-      nr = item[0]
-      # get and add additional data from web
-      urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/alm.json")
-      urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/events.json")
-      urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/ltv.json")
-      
-    if __name__ == '__main__':
-      with mp.Pool() as pool:
-        results = pool.map(get_urldata, urls)
-      
-      for result in results:
-        merge_nested_dicts(data, result)
     return data
 
 #%%
@@ -216,12 +202,28 @@ while True:
     print('connecting')
     time.sleep(30)
   print('connected')
-  # %%
+
   start = time.time()
+
   data = get_pegel()
+  urls = []
+  for item in data.items():
+    nr = item[0]
+    # get and add additional data from web
+    urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/alm.json")
+    urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/events.json")
+    urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/ltv.json")
+
+  if __name__ == '__main__':
+    with mp.Pool() as pool:
+      results = pool.map(get_urldata, urls)
+
+    for result in results:
+      merge_nested_dicts(data, result)
   end = time.time()
+
   print(f"Took {end - start}s collecting data")
-  # %%
+  
   for nr in data.items():
       publish_mqtt(nr)
   print('Pegel Sendt')

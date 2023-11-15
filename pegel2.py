@@ -10,7 +10,6 @@ import paho.mqtt.client as MQTT
 import os
 from sys import stdout
 import atexit
-from urllib.request import urlopen
 import gc
 import multiprocessing as mp
 
@@ -26,8 +25,8 @@ logger.addHandler(consoleHandler)
 
 def get_urldata(url):
     stationdata = []
-    stationresp = urlopen(url)
-    stationdata.append(json.loads(stationresp.read()))
+    stationresp = requests.get(url)
+    stationdata.append(json.loads(stationresp.content))
     data = {}
     for set in stationdata:
       nr = set[0].get("station_no")
@@ -47,6 +46,7 @@ def merge_nested_dicts(d1, d2):
             merge_nested_dicts(d1[key], value)
         else:
             d1[key] = value
+
 
 # %% get pegel data
 def get_pegel():
@@ -106,22 +106,6 @@ def get_pegel():
     data['9450']['location'] = 'Unterweißenbach'
     data['5230']['location'] = 'Weißenbach am Attersee'
     data['8445']['location'] = 'Roßleithen'
-#%%
-    urls = []
-    for item in data.items():
-      nr = item[0]
-      # get and add additional data from web
-      urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/alm.json")
-      urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/events.json")
-      urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/ltv.json")
-      
-    if __name__ == '__main__':
-      with mp.Pool() as pool:
-        results = pool.map(get_urldata, urls)
-      
-      for result in results:
-        merge_nested_dicts(data, result)
-        
 
       # for url in urls:
       #   x= get_urldata(url)
@@ -137,7 +121,24 @@ def get_pegel():
       #           data[nr][shortname] = entry.get("data")[-1][1]
       #         else:
       #           data[nr][shortname] = ''  
-
     return data
 
-print(get_pegel())
+data = get_pegel()    
+if __name__ == '__main__':
+  urls = []
+  for item in data.items():
+    nr = item[0]
+    # get and add additional data from web
+    urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/alm.json")
+    urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/events.json")
+    urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/ltv.json")
+  
+  start = time.time()
+  with mp.Pool() as pool:
+    for result in pool.map(get_urldata, urls):
+      merge_nested_dicts(data, result)
+
+  end = time.time()
+
+  print(data)
+  print(f"Took {end - start}s collecting data")
