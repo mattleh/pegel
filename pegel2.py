@@ -24,39 +24,6 @@ consoleHandler = logging.StreamHandler(stdout) #set streamhandler to stdout
 consoleHandler.setFormatter(logFormatter)
 logger.addHandler(consoleHandler)
 
-mqtt_server = os.environ.get('MQTT_SERVER')
-mqtt_port = int(os.environ.get('MQTT_PORT', '1883'))
-mqtt_user = os.environ.get('MQTT_USER')
-mqtt_password = os.environ.get('MQTT_PASSWORD')
-sleep = int(os.environ.get('SLEEP',  '15'))
-
-# connect to MQTT Server and publish all items
-mqtt = MQTT.Client("pegel-bridge")
-flag_connected = 0
-
-def on_connect(mqtt, userdata, flags, rc):
-   global flag_connected
-   flag_connected = 1
-
-def on_disconnect(mqtt, userdata, rc):
-   global flag_connected
-   flag_connected = 0
-
-mqtt.on_connect = on_connect
-mqtt.on_disconnect = on_disconnect
-mqtt.enable_logger(logger)
-
-if mqtt_user and mqtt_password:
-    mqtt.username_pw_set(mqtt_user, mqtt_password)
-mqtt.connect(mqtt_server, mqtt_port)  
-mqtt.loop_start()
-
-def exit_handler():
-    mqtt.disconnect()
-    mqtt.loop_stop()
-
-atexit.register(exit_handler)
-
 def get_urldata(url):
     stationdata = []
     stationresp = urlopen(url)
@@ -139,7 +106,6 @@ def get_pegel():
     data['9450']['location'] = 'Unterweißenbach'
     data['5230']['location'] = 'Weißenbach am Attersee'
     data['8445']['location'] = 'Roßleithen'
-
 #%%
     urls = []
     for item in data.items():
@@ -155,74 +121,23 @@ def get_pegel():
       
       for result in results:
         merge_nested_dicts(data, result)
+        
+
+      # for url in urls:
+      #   x= get_urldata(url)
+      #   stationdata = []
+      #   stationresp = urlopen(url)
+      #   stationdata.append(json.loads(stationresp.read()))
+
+      #   for set in stationdata:
+      #     for entry in set:
+      #         id = entry.get("station_no")
+      #         shortname = entry.get("ts_shortname").split(".")[1]
+      #         if len(entry.get("data")) > 0:
+      #           data[nr][shortname] = entry.get("data")[-1][1]
+      #         else:
+      #           data[nr][shortname] = ''  
+
     return data
 
-#%%
-
-def publish_mqtt(item):
-    # publish config to mqtt HA
-    mqtt.publish(
-          f"homeassistant/sensor/pegel_bridge/{item[0]}/config", 
-          json.dumps(
-              {
-                  "name": item[1].get("location") +' '+ item[1].get("water"),
-                  "state_topic": f"homeassistant/sensor/pegel_{item[0]}/state",
-                  "json_attributes_topic": f"homeassistant/sensor/pegel_{item[0]}/attr",
-                  "unit_of_measurement": item[1].get('unit'),
-                  "value_template": "{{ value_json.level }}",
-                  "device": {
-                      "identifiers": ["pegel_bridge"],
-                      "manufacturer": "ML/LH",
-                      "model": "PEGEL OOE OPENDATA",
-                      "name": "PEGEL OOE",
-                  },
-                  "unique_id": f"pegel_{item[0]}",
-              }
-          ),
-      )
-    # publish value to mqtt HA
-    mqtt.publish(
-          f"homeassistant/sensor/pegel_{item[0]}/state",
-          json.dumps({"level": item[1].get('value')}),
-      )
-    # publish additional data to mqtt HA
-    mqtt.publish(
-          f"homeassistant/sensor/pegel_{item[0]}/attr",
-          json.dumps(
-              {
-                  "Water": item[1].get('water'),
-                  "Location": item[1].get('location'),
-                  "timestamp": f"{str(nr[1].get('timestamp').isoformat()) if nr[1].get('timestamp') is not None else 'null'}",
-                  "Voralarm": item[1].get('Voralarm'),
-                  "Alarm1": item[1].get('Alarm1'),
-                  "Alarm2": item[1].get('Alarm2'),
-                  "Alarm3": item[1].get('Alarm3'),
-                  "Last_Event": item[1].get('Event'),
-                  "HW1": item[1].get('HW1'),
-                  "HW2": item[1].get('HW2'),
-                  "HW5": item[1].get('HW5'),
-                  "HW10": item[1].get('HW10'),
-                  "HW30": item[1].get('HW30'),
-                  "HW100": item[1].get('HW100'),
-                  "Niederwasser": item[1].get('NW'),
-                  "Mittelwasser": item[1].get('MW'),
-              }
-          ),
-      )
-#%%
-while True:
-  #%%
-  while flag_connected == 0:
-     print('connecting')
-     time.sleep(30)
-  # %%
-  data = get_pegel()
-
-  # %%
-  for nr in data.items():
-      publish_mqtt(nr)
-  print('Pegel Sendt')
-
-  gc.collect()
-  # ein wenig schlafen
-  time.sleep(60*sleep)
+print(get_pegel())
