@@ -142,12 +142,12 @@ if __name__ == '__main__':
 
     if not bool(data2) or (data2lastsync - datetime.datetime.now()).days >= 1: 
       print("Update Additional Data")
-      with mp.Pool(4) as pool:
+      with mp.Pool() as pool:
         for result in pool.map(get_urldata, urls):
           merge_nested_dicts(data2, result)
 
     end = time.time()
     merge_nested_dicts(data, data2)
     print(data)
-    print(f"Took {end - start}s collecting data")
+    print(f"Took {end - start:.2f}s collecting data")
     time.sleep(10)

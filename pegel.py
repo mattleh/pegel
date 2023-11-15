@@ -228,7 +228,7 @@ if __name__ == '__main__':
     end = time.time()
     merge_nested_dicts(data, data2)
     #print(data)
-    print(f"Took {end - start}s collecting data")
+    print(f"Took {end - start:.2f}s collecting data")
 
     for nr in data.items():
         publish_mqtt(nr)
