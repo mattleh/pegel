@@ -220,7 +220,7 @@ while True:
   start = time.time()
   data = get_pegel()
   end = time.time()
-  print(f"Took {end - start}s collecting data')
+  print(f"Took {end - start}s collecting data")
   # %%
   for nr in data.items():
       publish_mqtt(nr)
