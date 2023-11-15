@@ -201,8 +201,9 @@ if __name__ == '__main__':
 
   while flag_connected == 0:
     print('connecting')
-    time.sleep(30)
-    
+    time.sleep(15)
+
+  time.sleep(5)  
   print('connected')
   data2lastsync = datetime.datetime.now()
   data2 = {}
@@ -226,7 +227,7 @@ if __name__ == '__main__':
 
     end = time.time()
     merge_nested_dicts(data, data2)
-    print(data)
+    #print(data)
     print(f"Took {end - start}s collecting data")
 
     for nr in data.items():
