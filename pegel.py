@@ -196,16 +196,19 @@ def publish_mqtt(item):
           ),
       )
 #%%
-while True:
-  #%%
-  while flag_connected == 0:
-    print('connecting')
-    time.sleep(30)
-  print('connected')
 
+#%%
+while flag_connected == 0:
+  print('connecting')
+  time.sleep(30)
+
+print('connected')
+
+while True:
   start = time.time()
 
   data = get_pegel()
+
   urls = []
   for item in data.items():
     nr = item[0]
@@ -223,7 +226,7 @@ while True:
   end = time.time()
 
   print(f"Took {end - start}s collecting data")
-  
+
   for nr in data.items():
       publish_mqtt(nr)
   print('Pegel Sendt')
