@@ -125,6 +125,9 @@ def get_pegel():
 
 data = get_pegel()    
 if __name__ == '__main__':
+  print('connected')
+  data2lastsync = datetime.datetime.now()
+  data2 = {}
   urls = []
   for item in data.items():
     nr = item[0]
@@ -132,13 +135,19 @@ if __name__ == '__main__':
     urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/alm.json")
     urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/events.json")
     urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/ltv.json")
-  
-  start = time.time()
-  with mp.Pool() as pool:
-    for result in pool.map(get_urldata, urls):
-      merge_nested_dicts(data, result)
 
-  end = time.time()
+  while True:
+    start = time.time()
+    data = get_pegel()   
 
-  print(data)
-  print(f"Took {end - start}s collecting data")
+    if not bool(data2) or (data2lastsync - datetime.datetime.now()).days >= 1: 
+      print("Update Additional Data")
+      with mp.Pool() as pool:
+        for result in pool.map(get_urldata, urls):
+          merge_nested_dicts(data2, result)
+
+    end = time.time()
+    merge_nested_dicts(data, data2)
+    print(data)
+    print(f"Took {end - start}s collecting data")
+    time.sleep(10)
