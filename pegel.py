@@ -213,11 +213,14 @@ def publish_mqtt(item):
 while True:
   #%%
   while flag_connected == 0:
-     print('connecting')
-     time.sleep(30)
+    print('connecting')
+    time.sleep(30)
+  print('connected')
   # %%
+  start = time.time()
   data = get_pegel()
-
+  end = time.time()
+  print('Took ' + end - start + 's for collecting all data points')
   # %%
   for nr in data.items():
       publish_mqtt(nr)
