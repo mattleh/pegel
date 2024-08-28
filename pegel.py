@@ -89,7 +89,7 @@ def get_pegel():
 
 # In[3]:
 
-
+loop = asyncio.get_event_loop()
 connector = aiohttp.TCPConnector(limit_per_host=10)
 async def fetch_page(session, url):
     # make GET request using session
