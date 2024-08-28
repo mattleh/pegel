@@ -89,7 +89,6 @@ def get_pegel():
 
 # In[3]:
 
-loop = asyncio.get_event_loop()
 connector = aiohttp.TCPConnector(limit_per_host=10)
 async def fetch_page(session, url):
     # make GET request using session
@@ -235,7 +234,10 @@ while True:
     data = get_pegel()
     if not jsons or (lastsync - datetime.datetime.now()).days >= 1: 
         print("Update Additional Data")
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(asyncio.wait(tasks))
         jsons = asyncio.run(get_data(urls))
+        loop.close()
         lastsync = datetime.datetime.now()
 
     end = time.time()
