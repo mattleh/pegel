@@ -235,7 +235,7 @@ while True:
     data = get_pegel()
     if not jsons or (lastsync - datetime.datetime.now()).days >= 1: 
         print("Update Additional Data")
-        jsons = await get_data(urls)
+        jsons = asyncio.run(get_data(urls))
         lastsync = datetime.datetime.now()
 
     end = time.time()
