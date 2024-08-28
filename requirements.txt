@@ -2,3 +2,4 @@
 requests
 paho-mqtt
 python-dateutil
+aiohttp
