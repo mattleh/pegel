@@ -1,58 +1,27 @@
-#!/usr/bin/env python3
-# %% import
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
 import logging
 import requests
 import datetime
-from dateutil import parser
+from dateutil import parser, tz
 import json
 import time
-import paho.mqtt.client as MQTT
+from paho.mqtt import client as mqtt_client
 import os
-from sys import stdout
 import atexit
 from urllib.request import urlopen
+import aiohttp
 import gc
-import multiprocessing as mp
+import asyncio
 
-def on_connect(mqtt, userdata, flags, rc):
-   global flag_connected
-   flag_connected = 1
 
-def on_disconnect(mqtt, userdata, rc):
-   global flag_connected
-   flag_connected = 0
+# In[2]:
 
-def exit_handler():
-    mqtt.disconnect()
-    mqtt.loop_stop()
 
-atexit.register(exit_handler)
-
-def get_urldata(url):
-    stationdata = []
-    stationresp = urlopen(url)
-    stationdata.append(json.loads(stationresp.read()))
-    data = {}
-    for set in stationdata:
-      nr = set[0].get("station_no")
-      data[nr] = { 'unique_id' : nr }
-      for entry in set:
-          id = entry.get("station_no")
-          shortname = entry.get("ts_shortname").split(".")[1]
-          if len(entry.get("data")) > 0:
-            data[nr][shortname] = entry.get("data")[-1][1]
-          else:
-            data[nr][shortname] = ''
-    return data
-
-def merge_nested_dicts(d1, d2):
-    for key, value in d2.items():
-        if key in d1 and isinstance(d1[key], dict) and isinstance(value, dict):
-            merge_nested_dicts(d1[key], value)
-        else:
-            d1[key] = value
-
-# %% get pegel data
 def get_pegel():
   # daten abholen
     response = requests.get('http://data.ooe.gv.at/files/hydro/HDOOE_Export_OG.zrxp')
@@ -77,7 +46,8 @@ def get_pegel():
           # ID parsen
           if element.startswith('SANR'):
             nr = element.encode('utf-8')[4:].decode('utf-8')
-            data[nr] = { 'unique_id' : nr }
+            # data[nr] = { 'unique_id' : nr }
+            data[nr] = {}
           # Gewässer parsen
           if element.startswith('SWATER'):
             data[nr]['water'] = element.encode('utf-8')[6:].decode('utf-8')
@@ -96,9 +66,12 @@ def get_pegel():
           continue
         line = line.decode('latin1')
         elements = line.split(' ')
+        from_zone = tz.gettz(data[nr]['tz'])
         # erstes Element: Timecode parsen und in Unix-Timestamp verwandeln
         #timestamp = int(datetime.datetime.strptime(elements[0], "%Y%m%d%H%M%S").timestamp())
-        timestamp = parser.parse(f'{elements[0]} {data[nr].get("tz")[3:]}')
+        #timestamp = parser.parse(f'{elements[0]} {data[nr].get("tz")[3:]}')
+        timestamp = parser.parse(elements[0])
+        timestamp = timestamp.replace(tzinfo=from_zone)
         # zweites Element: Höhe in cm, allerdings gibt es ungültige Messwerte mit negativen Werten
         value = int(elements[1])
         # Timestamp und Value ersetzen, wenn es einen aktuelleren, gültigen Wert in der aktuellen Zeile gibt
@@ -111,15 +84,69 @@ def get_pegel():
     data['5230']['location'] = 'Weißenbach am Attersee'
     data['8445']['location'] = 'Roßleithen'
 
-#%%
     return data
 
-#%%
 
-def publish_mqtt(item):
+# In[3]:
+
+
+connector = aiohttp.TCPConnector(limit_per_host=10)
+async def fetch_page(session, url):
+    # make GET request using session
+    async with session.get(url) as response:
+        # return HTML content
+        return await response.json()
+
+async def get_data(urls):
+    async with aiohttp.ClientSession(connector=connector) as session:
+ 
+        # Initialize tasks list
+        tasks = []
+
+        for url in urls:
+            tasks.append(fetch_page(session, url))
+ 
+        # group and Execute tasks concurrently
+        htmls = await asyncio.gather(*tasks)
+    return htmls
+
+
+# In[4]:
+
+
+broker = os.environ.get('MQTT_SERVER')
+port = int(os.environ.get('MQTT_PORT', '1883'))
+topic = "homeassistant/sensor"
+#broker = 'mqtt.lan'
+#port = 1883
+#topic = 'test'
+
+client_id = 'pegel-bridge'
+username = os.environ.get('MQTT_USER')
+password = os.environ.get('MQTT_PASSWORD')
+sleep = int(os.environ.get('SLEEP',  '15'))
+
+
+def connect_mqtt():
+    def on_connect(client, userdata, flags, reason_code, properties):
+        if flags.session_present:
+            pass# ...
+        if reason_code == 0:
+            print("Connected to MQTT Broker!")
+        if reason_code > 0:
+            print(f'Failed to connect, return code {reason_code}\n')
+    
+    client = mqtt_client.Client(mqtt_client.CallbackAPIVersion.VERSION2, client_id)
+    client.username_pw_set(username, password)
+    client.on_connect = on_connect
+    client.connect(broker, port)
+    return client
+
+
+def publish(mqtt, item):
     # publish config to mqtt HA
-    mqtt.publish(
-          f"homeassistant/sensor/pegel_bridge/{item[0]}/config", 
+    p = mqtt.publish(
+          f"{topic}/pegel_bridge/{item[0]}/config", 
           json.dumps(
               {
                   "name": item[1].get("location") +' '+ item[1].get("water"),
@@ -133,107 +160,94 @@ def publish_mqtt(item):
                       "model": "PEGEL OOE OPENDATA",
                       "name": "PEGEL OOE",
                   },
+                  "device_class": f"{str(item[1].get('timestamp').isoformat()) if item[1].get('timestamp') is not None else 'null'}",
                   "unique_id": f"pegel_{item[0]}",
               }
           ),
       )
+    p.wait_for_publish()
     # publish value to mqtt HA
-    mqtt.publish(
-          f"homeassistant/sensor/pegel_{item[0]}/state",
+    p = mqtt.publish(
+          f"{topic}/pegel_{item[0]}/state",
           json.dumps({"level": item[1].get('value')}),
       )
+    p.wait_for_publish()
     # publish additional data to mqtt HA
-    mqtt.publish(
-          f"homeassistant/sensor/pegel_{item[0]}/attr",
+    p = mqtt.publish(
+          f"{topic}/pegel_{item[0]}/attr",
           json.dumps(
               {
                   "Water": item[1].get('water'),
                   "Location": item[1].get('location'),
-                  "timestamp": f"{str(nr[1].get('timestamp').isoformat()) if nr[1].get('timestamp') is not None else 'null'}",
-                  "Voralarm": item[1].get('Voralarm'),
-                  "Alarm1": item[1].get('Alarm1'),
-                  "Alarm2": item[1].get('Alarm2'),
-                  "Alarm3": item[1].get('Alarm3'),
-                  "Last_Event": item[1].get('Event'),
-                  "HW1": item[1].get('HW1'),
-                  "HW2": item[1].get('HW2'),
-                  "HW5": item[1].get('HW5'),
-                  "HW10": item[1].get('HW10'),
-                  "HW30": item[1].get('HW30'),
-                  "HW100": item[1].get('HW100'),
-                  "Niederwasser": item[1].get('NW'),
-                  "Mittelwasser": item[1].get('MW'),
+                  "timestamp": f"{str(item[1].get('timestamp').isoformat()) if item[1].get('timestamp') is not None else 'null'}",
+                  "Voralarm": f"{str(item[1].get('Voralarm')['data'][0][-1]) if item[1].get('Voralarm')['data'] else ''}",
+                  "Alarm1": f"{str(item[1].get('Alarm1')['data'][0][-1]) if item[1].get('Alarm1')['data'] else ''}",
+                  "Alarm2": f"{str(item[1].get('Alarm2')['data'][0][-1]) if item[1].get('Alarm2')['data'] else ''}",
+                  "Alarm3": f"{str(item[1].get('Alarm3')['data'][0][-1]) if item[1].get('Alarm3')['data'] else ''}",
+                  "Last_Event": f"{str(item[1].get('Event').get('data')[-1][-1]) if item[1].get('Event').get('data') else ''}",
+                  "HW1": f"{str(item[1].get('HW1')['data'][0][-1]) if item[1].get('HW1')['data'] else ''}",
+                  "HW2": f"{str(item[1].get('HW2')['data'][0][-1]) if item[1].get('HW2')['data'] else ''}",
+                  "HW5": f"{str(item[1].get('HW5')['data'][0][-1]) if item[1].get('HW5')['data'] else ''}",
+                  "HW10": f"{str(item[1].get('HW10')['data'][0][-1]) if item[1].get('HW10')['data'] else ''}",
+                  "HW30": f"{str(item[1].get('HW30')['data'][0][-1]) if item[1].get('HW30')['data'] else ''}",
+                  "HW100": f"{str(item[1].get('HW100')['data'][0][-1]) if item[1].get('HW100')['data'] else ''}",
+                  "Niederwasser": f"{str(item[1].get('NW').get('data')[-1][-1]) if item[1].get('NW').get('data') else ''}",
+                  "Mittelwasser": f"{str(item[1].get('MW').get('data')[-1][-1]) if item[1].get('MW').get('data') else ''}"
               }
           ),
       )
-#%%
+    p.wait_for_publish()
 
-#%%
+
+def run():
+    client = connect_mqtt()
+    client.loop_start()
+    for i in data.items():
+        publish(client, i)
+    client.loop_stop()
+
+
+# In[5]:
+
+
 data = get_pegel()
-if __name__ == '__main__':
-  logging.basicConfig(level=logging.INFO)
 
-  logger = logging.getLogger(__name__)
-  logFormatter = logging.Formatter\
-  ("%(name)-12s %(asctime)s %(levelname)-8s %(filename)s:%(funcName)s %(message)s")
-  consoleHandler = logging.StreamHandler(stdout) #set streamhandler to stdout
-  consoleHandler.setFormatter(logFormatter)
-  logger.addHandler(consoleHandler)
 
-  mqtt_server = os.environ.get('MQTT_SERVER')
-  mqtt_port = int(os.environ.get('MQTT_PORT', '1883'))
-  mqtt_user = os.environ.get('MQTT_USER')
-  mqtt_password = os.environ.get('MQTT_PASSWORD')
-  sleep = int(os.environ.get('SLEEP',  '15'))
+# In[6]:
 
-  # connect to MQTT Server and publish all items
-  mqtt = MQTT.Client("pegel-bridge")
-  flag_connected = 0
 
-  mqtt.on_connect = on_connect
-  mqtt.on_disconnect = on_disconnect
-  mqtt.enable_logger(logger)
+urls = []
+for item, value in data.items():
+  nr = item
+  # get and add additional data from web
+  urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/alm.json")
+  urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/events.json")
+  urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/ltv.json")
 
-  if mqtt_user and mqtt_password:
-      mqtt.username_pw_set(mqtt_user, mqtt_password)
-  mqtt.connect(mqtt_server, mqtt_port)  
-  mqtt.loop_start()
 
-  while flag_connected == 0:
-    print('connecting')
-    time.sleep(15)
+# In[ ]:
 
-  time.sleep(5)  
-  print('connected')
-  data2lastsync = datetime.datetime.now()
-  data2 = {}
-  urls = []
-  for item in data.items():
-    nr = item[0]
-    # get and add additional data from web
-    urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/alm.json")
-    urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/events.json")
-    urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/ltv.json")
 
-  while True:
+lastsync = datetime.datetime.now() - datetime.timedelta(days=2)
+jsons = []
+while True:
     start = time.time()
-    data = get_pegel()   
-
-    if not bool(data2) or (data2lastsync - datetime.datetime.now()).days >= 1: 
-      print("Update Additional Data")
-      with mp.Pool() as pool:
-        for result in pool.map(get_urldata, urls):
-          merge_nested_dicts(data2, result)
+    data = get_pegel()
+    if not jsons or (lastsync - datetime.datetime.now()).days >= 1: 
+        print("Update Additional Data")
+        jsons = await get_data(urls)
+        lastsync = datetime.datetime.now()
 
     end = time.time()
-    merge_nested_dicts(data, data2)
     #print(data)
     print(f"Took {end - start:.2f}s collecting data")
 
-    for nr in data.items():
-        publish_mqtt(nr)
+    for i in jsons:
+        for j in i:
+            data[j["station_no"]][j["ts_shortname"].split(".")[-1]] = j
+     
+    run()
     print('Pegel Sendt')
 
-    gc.collect()
     # ein wenig schlafen
     time.sleep(60*sleep)
