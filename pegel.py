@@ -163,12 +163,14 @@ def publish(mqtt, item):
                   "unique_id": f"pegel_{item[0]}",
               }
           ),
+          qos=2, retain=True
       )
     p.wait_for_publish()
     # publish value to mqtt HA
     p = mqtt.publish(
           f"{topic}/pegel_{item[0]}/state",
           json.dumps({"level": item[1].get('value')}),
+          qos=2, retain=True
       )
     p.wait_for_publish()
     # publish additional data to mqtt HA
@@ -194,6 +196,7 @@ def publish(mqtt, item):
                   "Mittelwasser": f"{str(item[1].get('MW').get('data')[-1][-1]) if item[1].get('MW').get('data') else ''}"
               }
           ),
+          qos=2, retain=True
       )
     p.wait_for_publish()
 
