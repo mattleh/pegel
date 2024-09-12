@@ -159,7 +159,7 @@ def publish(mqtt, item):
                       "model": "PEGEL OOE OPENDATA",
                       "name": "PEGEL OOE",
                   },
-                  "device_class": f"{str(item[1].get('timestamp').isoformat()) if item[1].get('timestamp') is not None else 'null'}",
+#                  "device_class": f"{str(item[1].get('timestamp').isoformat()) if item[1].get('timestamp') is not None else 'null'}",
                   "unique_id": f"pegel_{item[0]}",
               }
           ),
