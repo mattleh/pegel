@@ -24,8 +24,7 @@ import asyncio
 
 def get_pegel():
   # daten abholen
-    response = requests.get('http://data.ooe.gv.at/files/hydro/HDOOE_Export_OG.zrxp')
-
+    response = requests.get('https://data.ooe.gv.at/files/hydro/HDOOE_Export_OG.zrxp')
     data = {}
     nr = None
     # über alle Zeilen iterieren. Die Response ist so aufgebaut, dass immer zuerst
@@ -104,7 +103,7 @@ async def get_data(urls):
  
         # Initialize tasks list
         tasks = []
-
+        urls = get_urls()
         for url in urls:
             tasks.append(fetch_page(session, url))
  
@@ -215,19 +214,20 @@ def run():
 # In[5]:
 
 
-data = get_pegel()
+#data = get_pegel()
 
 
 # In[6]:
 
-
-urls = []
-for item, value in data.items():
-  nr = item
-  # get and add additional data from web
-  urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/alm.json")
-  urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/events.json")
-  urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/ltv.json")
+def get_urls():
+  urls = []
+  for item, value in data.items():
+    nr = item
+    # get and add additional data from web
+    urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/alm.json")
+    urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/events.json")
+    urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/ltv.json")
+    return urls
 
 
 # In[ ]:
@@ -240,6 +240,7 @@ while True:
     data = get_pegel()
     if not jsons or (lastsync - datetime.datetime.now()).days >= 1: 
         print("Update Additional Data")
+        urls = get_urls()
         jsons = asyncio.run(get_data(urls))
         lastsync = datetime.datetime.now()
 
