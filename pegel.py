@@ -80,10 +80,12 @@ def get_pegel():
           data[nr]['value'] = value
 
     # Korrektur für kaputte Daten die doppelt transkodiert wurden -> Müll
-    data['9450']['location'] = 'Unterweißenbach'
-    data['5230']['location'] = 'Weißenbach am Attersee'
-    data['8445']['location'] = 'Roßleithen'
-
+    try:
+      data['9450']['location'] = 'Unterweißenbach'
+      data['5230']['location'] = 'Weißenbach am Attersee'
+      data['8445']['location'] = 'Roßleithen'
+    except:
+       pass
     return data
 
 
