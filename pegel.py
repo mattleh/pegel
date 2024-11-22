@@ -213,7 +213,7 @@ def run():
 # In[5]:
 
 
-#data = get_pegel()
+data = get_pegel()
 
 
 # In[6]:
