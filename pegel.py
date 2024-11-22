@@ -86,7 +86,7 @@ def get_pegel():
       data['5230']['location'] = 'Weißenbach am Attersee'
     if '8445' in data:
       data['8445']['location'] = 'Roßleithen'
-
+    print(f'Collected data from {len(data)} stations')
     return data
 
 
