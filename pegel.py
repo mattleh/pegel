@@ -103,7 +103,6 @@ async def get_data(urls):
  
         # Initialize tasks list
         tasks = []
-        urls = get_urls()
         for url in urls:
             tasks.append(fetch_page(session, url))
  
@@ -219,15 +218,14 @@ def run():
 
 # In[6]:
 
-def get_urls():
-  urls = []
-  for item, value in data.items():
-    nr = item
-    # get and add additional data from web
-    urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/alm.json")
-    urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/events.json")
-    urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/ltv.json")
-    return urls
+urls = []
+for item, value in data.items():
+  nr = item
+  # get and add additional data from web
+  urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/alm.json")
+  urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/events.json")
+  urls.append(f"https://hydro.ooe.gv.at/daten/internet/stations/OG/{nr}/S/ltv.json")
+
 
 
 # In[ ]:
@@ -240,7 +238,6 @@ while True:
     data = get_pegel()
     if not jsons or (lastsync - datetime.datetime.now()).days >= 1: 
         print("Update Additional Data")
-        urls = get_urls()
         jsons = asyncio.run(get_data(urls))
         lastsync = datetime.datetime.now()
 
