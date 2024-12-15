@@ -72,7 +72,7 @@ def get_pegel():
         timestamp = parser.parse(elements[0])
         timestamp = timestamp.replace(tzinfo=from_zone)
         # zweites Element: Höhe in cm, allerdings gibt es ungültige Messwerte mit negativen Werten
-        value = int(elements[1])
+        value = float(elements[1])
         # Timestamp und Value ersetzen, wenn es einen aktuelleren, gültigen Wert in der aktuellen Zeile gibt
         if ('timestamp' not in data[nr] or timestamp > data[nr]['timestamp']) and value >= 0:
           data[nr]['timestamp'] = timestamp
